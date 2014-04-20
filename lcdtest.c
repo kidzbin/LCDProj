@@ -1,20 +1,27 @@
 #include <stdio.h>
 #include <wiringPi.h>
+#include "DHT11/DHT11.h"
+#include "PCD8544/PCD8544.h"
 #include "lcdtest.h"
-
-#define  DEBUG   0
-
-#define  HIGH  1
-#define  LOW   0
 
 #define READPIN 7 
 
+// pin setup
+int _din = 1;
+int _sclk = 0;
+int _dc = 2;
+int _rst = 4;
+int _cs = 3;
+
+// lcd contrast
+int contrast = 50;
 
 int main(void)
 {
-  int cnt;
-  int res;
   _DHT11Data DHT11Data;
+  char HumiInfo[10];
+  char TempInfo[10];
+  int cnt;
 
   if(wiringPiSetup() == -1)
     return -1;
@@ -26,10 +33,11 @@ int main(void)
   digitalWrite(READPIN, HIGH);
   delay(1000);
 
-  cnt = 10;
+  cnt = 30;
 
-  while(cnt--) 
+  while(cnt) 
   {
+    
     //at least keop low 18ms
     pinMode(READPIN, OUTPUT);
     digitalWrite(READPIN, LOW);
@@ -41,98 +49,30 @@ int main(void)
 
     pinMode(READPIN, INPUT);
 
-    //Wait DHT11 Prepare Data
-    Waiting(LOW);
-    Waiting(HIGH);
-
-    if(FetchData(&DHT11Data))
+    if(FetchData(READPIN,&DHT11Data))
     {
       printf("Temperature %2dC Humidity %2d%c \n",DHT11Data.Value[0x02],DHT11Data.Value[0x00],0x25);
+
+      sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
+      sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
+      
+      
+      LCDInit(_sclk, _din, _dc, _cs, _rst, contrast);
+      LCDclear();
+      LCDdrawstring(0, 0, "Raspberry Pi:");
+      LCDdrawline(0, 10, 83, 10, BLACK);
+      LCDdrawstring(0, 12, TempInfo);
+      LCDdrawstring(0, 20, HumiInfo);
+      sprintf(TempInfo,"%2d",cnt);
+      LCDdrawstring(0, 28, TempInfo);
+      LCDdisplay();
+      delay(5000);
+      //cnt--;
     }
     else
     {
       printf("Detect failed\n");
-    }
-
-    delay(500);
-  }
-}
-
-
-int Waiting(int Signal)
-{
-  int bCnt=0x00;
-
-  while( digitalRead(READPIN) == Signal )
-  {
-      bCnt++;
-      delayMicroseconds(1);
-      if(bCnt > 200) break;
+    }    
   }
 
-  return bCnt;
-}
-
-int FetchData(_DHT11Data * DHT11Data)
-{
-  int i,j;
-  int rawus[40];
-  int sbit[40];
-  int sum;
-  int Maxus=0x00,Minus=0xFFFF;
-  int diffrange;
-
-  for( i=0 ; i< 40; i++ )
-  {
-    Waiting(LOW);
-    rawus[i]=Waiting(HIGH);
-  }
-
-  for( i=0 ; i< 40; i++ )
-  {
-    if( rawus[i] > Maxus ) Maxus = rawus[i];
-    if( rawus[i] < Minus ) Minus = rawus[i];
-  }  
-  diffrange = Minus + (Maxus-Minus)/2;
-
-  for( i=0 ; i< 40; i++ )
-  {
-    sbit[i] = (rawus[i]>diffrange)?1:0;
-  }
-
-  for(i=0;i<5;i++)
-  {
-    DHT11Data->Value[i] = 0x00;
-    for(j=0;j<8;j++)
-    {
-        DHT11Data->Value[i] |= sbit[i*8 + j] <<( 7 - (j&0x07) ) ;
-    } 
-  }
-
-#if DEBUG
-  printf("--- Debug ----\n");
-  printf("Maxus = %d , Minus = %d , diff = %d \n",Maxus,Minus, diffrange);
-  for( i=0 ; i< 40; i++ )
-  {
-    printf("%2d ",rawus[i]);
-  }
-  printf("\n");
-  for( i=0 ; i< 40; i++ )
-  {
-    printf("%2d ",sbit[i]);
-  }
-  printf("\n");
-  for(i=0;i<5;i++)
-    printf("%d ",DHT11Data->Value[i]);
-  printf("\n------------\n");
-#endif
-
-  sum = 0x00;
-  for(i=0;i<4;i++)
-    sum += DHT11Data->Value[i];
-
-  if( DHT11Data->Value[4] == sum)
-    return 1;
-  else
-    return 0;
 }
