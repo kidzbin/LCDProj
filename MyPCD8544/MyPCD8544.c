@@ -1,7 +1,18 @@
 
-#include <wiringPi.h>
-#include "MyPCD8544.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <wiringPi.h>
+#include <wiringShift.h>
+#include "MyPCD8544.h"
+
+// COnfiguration for the LCD
+#define LCD_C     LOW
+#define LCD_D     HIGH
+#define LCD_CMD   0
+
+
+#define  DEBUG 0
 
 // LCD pins      Raspberry Pi
 // LCD1 - GND    P06  - GND
@@ -15,25 +26,26 @@
 
 //delayMicroseconds(30);
 
+#define LCDWIDTH  48
+#define LCDHEIGHT 84
+
 typedef struct 
 {
-	unsigned char CLK;
-	unsigned char DIN;
-	unsigned char DC;
-	unsigned char CE;
-	unsigned char RST;
+	uint8_t CLK;
+	uint8_t DIN;
+	uint8_t DC;
+	uint8_t CE;
+	uint8_t RST;
 }_LCDCtrl;
 
 
 _LCDCtrl LCDCtrl;
 
-void LCDReset(void)
+
+void gotoXY(uint8_t x, uint8_t y)
 {
-	digitalWrite(LCDCtrl.CE , LOW);
-	digitalWrite(LCDCtrl.RST, LOW);
-	delay(500);
-	digitalWrite(LCDCtrl.RST, HIGH);
-	digitalWrite(LCDCtrl.CE , HIGH);
+  SendLCD( 0, 0x80 | x);  // Column.
+  SendLCD( 0, 0x40 | y);  // Row.
 }
 
 
@@ -55,35 +67,41 @@ int LCDInit(void)
 	pinMode(LCDCtrl.CE  , OUTPUT);
 	pinMode(LCDCtrl.RST , OUTPUT);
 
-	LCDReset();
-
-	delayMicroseconds(100);
-
 	digitalWrite(LCDCtrl.CE , LOW);
-	digitalWrite(LCDCtrl.CLK, LOW);
+	digitalWrite(LCDCtrl.RST, LOW);
+	digitalWrite(LCDCtrl.RST, HIGH);
+	digitalWrite(LCDCtrl.CE , HIGH);
+
+	SendLCD(CMD,0x21);
+	SendLCD(CMD,0xB4);
+	SendLCD(CMD,0x04);
+	SendLCD(CMD,0x14);
+	SendLCD(CMD,0x0C);
+
+  	SendLCD(LOW, 0x20);
+  	SendLCD(LOW, 0x0C);
 
 	return 0;
 }
 
-void Sned(unsigned char bMode,unsigned char bData)
+int LCDClear(void)
 {
-	unsigned char i;
+	uint16_t i;
+	for ( i = 0; i < LCDWIDTH*LCDHEIGHT/8 ; i++)
+		SendLCD(DATA,0x00);
 
+}
+
+void SendLCD(uint8_t bMode,uint8_t bData)
+{
+	uint8_t i;
+
+	digitalWrite(LCDCtrl.CE , LOW);
 	digitalWrite(LCDCtrl.DC , bMode);
-	delayMicroseconds(1);
-	
-	i=0x08;
-	do
-	{
-		i--;
-		digitalWrite(LCDCtrl.CLK , LOW     );
-		delayMicroseconds(1);
-		digitalWrite(LCDCtrl.DIN , (bData>>i)&0x01 );
-		delayMicroseconds(1);
-		digitalWrite(LCDCtrl.CLK , HIGH    );
-		delayMicroseconds(1);
-	}while(i);
+	shiftOut(LCDCtrl.DIN,LCDCtrl.CLK, MSBFIRST, bData) ;
+	digitalWrite(LCDCtrl.CE , HIGH);
 
+#if DEBUG
 	printf("%2x ",bData);
 
 	i=0x08;
@@ -94,30 +112,36 @@ void Sned(unsigned char bMode,unsigned char bData)
 	}while(i);
 
 	printf("\n");
+#endif
+}
+
+void LcdCharacter(char character)
+{
+	uint8_t index;
+  	SendLCD(LCD_D, 0x00);
+  	for (index = 0; index < 5; index++)
+  	{
+    	SendLCD(LCD_D, ASCII[character - 0x20][index]);
+  	}
+  	SendLCD(LCD_D, 0x00);
+}
+
+void LcdString(char *characters)
+{
+  while (*characters)
+  {
+    LcdCharacter(*characters++);
+  }
 }
 
 void LCDSample(void)
 {
-	//Function Set
-	Sned(CMD,0x21);
-	Sned(CMD,0x90);
-	Sned(CMD,0x20);
-	Sned(CMD,0x0C);
+	LCDInit();
+	LCDClear();
 
-	Sned(DATA,0x1F);
-	Sned(DATA,0x05);
-	Sned(DATA,0x07);
-
-	Sned(DATA,0x05);
-	Sned(DATA,0x07);
-	Sned(DATA,0x00);
-	Sned(DATA,0x0F);
-
-	Sned(DATA,0x04);
-	Sned(DATA,0x1F);
-
-	Sned(CMD,0x0D);
-
-
+ 	gotoXY(7,1);
+  	LcdString("Nokia 5110");
+  	gotoXY(4,2);
+  	LcdString("Scroll Demo");
 
 }

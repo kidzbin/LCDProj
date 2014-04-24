@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <wiringPi.h>
+#include <stdint.h>
 #include "DHT11/DHT11.h"
 //#include "PCD8544/PCD8544.h"
 #include "MyPCD8544/MyPCD8544.h"
@@ -36,14 +37,18 @@ int main(void)
 
   cnt = 1;
 
-  LCDInit();
+  // LCDInit();
 
-  //while(cnt--) 
+  // LCDClear();
+
+  // LCDInit();
+
+  while(cnt--) 
   {
-    LCDSample();
+     LCDSample();
   }
 
-  return 0;
+ return 0;
 
   while(cnt) 
   {
