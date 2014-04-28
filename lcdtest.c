@@ -67,17 +67,17 @@ int main(void)
 
   LCDInit();
 
-  while(cnt) 
-  {
-     LCDSample();
-     delay(2000);
-  }
+  // while(cnt) 
+  // {
+  //    LCDSample();
+  //    delay(2000);
+  // }
 
  //return 0;
 
   while(cnt) 
   {
-    //LCDSample();
+    LCDSample();
 
     //at least keop low 18ms
     pinMode(READPIN, OUTPUT);
@@ -94,9 +94,15 @@ int main(void)
     {
       printf("Temperature %2dC Humidity %2d%c \n",DHT11Data.Value[0x02],DHT11Data.Value[0x00],0x25);
 
-      // sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
-      // sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
+      sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
+      sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
       
+      LCDClear();
+      gotoXY(4,1);
+      LcdString(HumiInfo);
+      gotoXY(4,2);
+      LcdString(TempInfo);
+
       
       // LCDInit(_sclk, _din, _dc, _cs, _rst, contrast);
       // LCDclear();

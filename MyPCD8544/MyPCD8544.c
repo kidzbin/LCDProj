@@ -100,7 +100,23 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 
 	digitalWrite(LCDCtrl.CE , LOW);
 	digitalWrite(LCDCtrl.DC , bMode);
-	shiftOut(LCDCtrl.DIN,LCDCtrl.CLK, MSBFIRST, bData) ;
+	//shiftOut(LCDCtrl.DIN,LCDCtrl.CLK, MSBFIRST, bData) ;
+	
+	i=0x08;
+	do
+	{
+		i--;
+		// printf("%d ",(bData>>i)&0x01);
+		digitalWrite(LCDCtrl.DIN , (bData>>i)&0x01 );
+		digitalWrite(LCDCtrl.CLK , HIGH);
+		digitalWrite(LCDCtrl.CLK , LOW );
+
+
+	}while(i);	
+
+
+
+
 	digitalWrite(LCDCtrl.CE , HIGH);
 
 #if DEBUG
