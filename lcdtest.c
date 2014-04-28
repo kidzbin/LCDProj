@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <wiringPi.h>
+#include <wiringShift.h>
 #include <stdint.h>
 #include "DHT11/DHT11.h"
 //#include "PCD8544/PCD8544.h"
@@ -7,6 +8,11 @@
 #include "lcdtest.h"
 
 #define READPIN 7 
+
+#define KDIN    6
+#define KSCK    5
+
+//uint8_t shiftIn (uint8_t dPin, uint8_t cPin, uint8_t order) ;
 
 // pin setup
 // int _din = 1;
@@ -18,11 +24,33 @@
 // lcd contrast
 int contrast = 50;
 
+
+uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk);
+
+uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk)
+{
+  uint16_t wTemp;
+  uint8_t  i;
+
+  wTemp = 0x00;
+
+  i = 16;
+  do
+  {
+    i--;
+    wTemp |= (shiftIn(bDataIn, bClk, MSBFIRST)&0x01) << i ;
+  }while(i);
+
+  return wTemp;
+}
+
+
 int main(void)
 {
   _DHT11Data DHT11Data;
   char HumiInfo[10];
   char TempInfo[10];
+  uint16_t wTemp;
   int cnt;
 
   if(wiringPiSetup() == -1)
@@ -37,22 +65,19 @@ int main(void)
 
   cnt = 1;
 
-  // LCDInit();
-
-  // LCDClear();
-
-  // LCDInit();
-
-  while(cnt--) 
-  {
-     LCDSample();
-  }
-
- return 0;
+  LCDInit();
 
   while(cnt) 
   {
-    LCDSample();
+     LCDSample();
+     delay(2000);
+  }
+
+ //return 0;
+
+  while(cnt) 
+  {
+    //LCDSample();
 
     //at least keop low 18ms
     pinMode(READPIN, OUTPUT);

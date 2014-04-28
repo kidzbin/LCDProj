@@ -81,6 +81,8 @@ int LCDInit(void)
   	SendLCD(LOW, 0x20);
   	SendLCD(LOW, 0x0C);
 
+  	LCDClear();
+
 	return 0;
 }
 
@@ -136,9 +138,7 @@ void LcdString(char *characters)
 
 void LCDSample(void)
 {
-	LCDInit();
 	LCDClear();
-
  	gotoXY(7,1);
   	LcdString("Nokia 5110");
   	gotoXY(4,2);
