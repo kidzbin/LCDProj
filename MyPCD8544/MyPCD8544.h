@@ -1,6 +1,3 @@
-#define  HIGH  1
-#define  LOW   0
-
 #define CMD    0
 #define DATA   1
 

@@ -1,9 +1,5 @@
 #include <stdio.h>
-#include <wiringPi.h>
-#include <wiringShift.h>
 #include <stdint.h>
-#include "DHT11/DHT11.h"
-//#include "PCD8544/PCD8544.h"
 #include "MyPCD8544/MyPCD8544.h"
 #include "lcdtest.h"
 
@@ -25,95 +21,95 @@
 int contrast = 50;
 
 
-uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk);
+// uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk);
 
-uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk)
-{
-  uint16_t wTemp;
-  uint8_t  i;
+// uint16_t GetTemperature(uint8_t bDataIn , uint8_t bClk)
+// {
+//   uint16_t wTemp;
+//   uint8_t  i;
 
-  wTemp = 0x00;
+//   wTemp = 0x00;
 
-  i = 16;
-  do
-  {
-    i--;
-    wTemp |= (shiftIn(bDataIn, bClk, MSBFIRST)&0x01) << i ;
-  }while(i);
+//   i = 16;
+//   do
+//   {
+//     i--;
+//     wTemp |= (shiftIn(bDataIn, bClk, MSBFIRST)&0x01) << i ;
+//   }while(i);
 
-  return wTemp;
-}
+//   return wTemp;
+// }
 
 
 int main(void)
 {
-  _DHT11Data DHT11Data;
-  char HumiInfo[10];
-  char TempInfo[10];
+  //_DHT11Data DHT11Data;
+  //char HumiInfo[10];
+  //char TempInfo[10];
   uint16_t wTemp;
   int cnt;
 
-  if(wiringPiSetup() == -1)
-    return -1;
+  // if(wiringPiSetup() == -1)
+  //   return -1;
 
   printf(" --- Start Detect ---\n" );
 
-  //Pull High wait for Voltage Stable
-  pinMode(READPIN, OUTPUT);
-  digitalWrite(READPIN, HIGH);
-  delay(1000);
+  // //Pull High wait for Voltage Stable
+  // pinMode(READPIN, OUTPUT);
+  // digitalWrite(READPIN, HIGH);
+  // delay(1000);
 
   cnt = 1;
 
   LCDInit();
 
-  while(cnt) 
+  //while(cnt) 
   {
      LCDSample();
-     delay(2000);
+     
   }
 
  //return 0;
 
-  while(cnt) 
-  {
-    //LCDSample();
+  // while(cnt) 
+  // {
+  //   //LCDSample();
 
-    //at least keop low 18ms
-    pinMode(READPIN, OUTPUT);
-    digitalWrite(READPIN, LOW);
-    delay(20);
-    //Keep High 25~40us
-    pinMode(READPIN, OUTPUT);
-    digitalWrite(READPIN, HIGH);
-    delayMicroseconds(30);
+  //   //at least keop low 18ms
+  //   pinMode(READPIN, OUTPUT);
+  //   digitalWrite(READPIN, LOW);
+  //   delay(20);
+  //   //Keep High 25~40us
+  //   pinMode(READPIN, OUTPUT);
+  //   digitalWrite(READPIN, HIGH);
+  //   delayMicroseconds(30);
 
-    pinMode(READPIN, INPUT);
+  //   pinMode(READPIN, INPUT);
 
-    if(FetchData(READPIN,&DHT11Data))
-    {
-      printf("Temperature %2dC Humidity %2d%c \n",DHT11Data.Value[0x02],DHT11Data.Value[0x00],0x25);
+  //   if(FetchData(READPIN,&DHT11Data))
+  //   {
+  //     printf("Temperature %2dC Humidity %2d%c \n",DHT11Data.Value[0x02],DHT11Data.Value[0x00],0x25);
 
-      // sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
-      // sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
+  //     // sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
+  //     // sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
       
       
-      // LCDInit(_sclk, _din, _dc, _cs, _rst, contrast);
-      // LCDclear();
-      // LCDdrawstring(0, 0, "Raspberry Pi:");
-      // LCDdrawline(0, 10, 83, 10, BLACK);
-      // LCDdrawstring(0, 12, TempInfo);
-      // LCDdrawstring(0, 20, HumiInfo);
-      // sprintf(TempInfo,"%2d",cnt);
-      // LCDdrawstring(0, 28, TempInfo);
-      // LCDdisplay();
-      delay(5000);
-      //cnt--;
-    }
-    else
-    {
-      printf("Detect failed\n");
-    }    
-  }
+  //     // LCDInit(_sclk, _din, _dc, _cs, _rst, contrast);
+  //     // LCDclear();
+  //     // LCDdrawstring(0, 0, "Raspberry Pi:");
+  //     // LCDdrawline(0, 10, 83, 10, BLACK);
+  //     // LCDdrawstring(0, 12, TempInfo);
+  //     // LCDdrawstring(0, 20, HumiInfo);
+  //     // sprintf(TempInfo,"%2d",cnt);
+  //     // LCDdrawstring(0, 28, TempInfo);
+  //     // LCDdisplay();
+  //     delay(5000);
+  //     //cnt--;
+  //   }
+  //   else
+  //   {
+  //     printf("Detect failed\n");
+  //   }    
+  // }
 
 }

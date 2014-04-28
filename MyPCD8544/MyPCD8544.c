@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <wiringPi.h>
-#include <wiringShift.h>
+#include <bcm2835.h>
 #include "MyPCD8544.h"
 
 // COnfiguration for the LCD
@@ -12,7 +11,7 @@
 #define LCD_CMD   0
 
 
-#define  DEBUG 0
+#define  DEBUG 1
 
 // LCD pins      Raspberry Pi
 // LCD1 - GND    P06  - GND
@@ -28,6 +27,8 @@
 
 #define LCDWIDTH  48
 #define LCDHEIGHT 84
+
+void SPI_Shift(uint8_t bDIN,uint8_t bCLK,uint8_t bData);  //MSB First
 
 typedef struct 
 {
@@ -52,8 +53,8 @@ void gotoXY(uint8_t x, uint8_t y)
 int LCDInit(void)
 {
 
-  if(wiringPiSetup() == -1)
-    return -1;
+    if (!bcm2835_init())
+        return 1;
 
 	LCDCtrl.CLK = 0;
 	LCDCtrl.DIN = 1;
@@ -61,19 +62,32 @@ int LCDInit(void)
 	LCDCtrl.CE  = 3;
 	LCDCtrl.RST = 4;
 
-	pinMode(LCDCtrl.CLK , OUTPUT);
-	pinMode(LCDCtrl.DIN , OUTPUT);
-	pinMode(LCDCtrl.DC  , OUTPUT);
-	pinMode(LCDCtrl.CE  , OUTPUT);
-	pinMode(LCDCtrl.RST , OUTPUT);
+	// pinMode(LCDCtrl.CLK , OUTPUT);
+	// pinMode(LCDCtrl.DIN , OUTPUT);
+	// pinMode(LCDCtrl.DC  , OUTPUT);
+	// pinMode(LCDCtrl.CE  , OUTPUT);
+	// pinMode(LCDCtrl.RST , OUTPUT);
 
-	digitalWrite(LCDCtrl.CE , LOW);
-	digitalWrite(LCDCtrl.RST, LOW);
-	digitalWrite(LCDCtrl.RST, HIGH);
-	digitalWrite(LCDCtrl.CE , HIGH);
+    // Set the pin to be an output
+    bcm2835_gpio_fsel(LCDCtrl.CLK , BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_fsel(LCDCtrl.DIN , BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_fsel(LCDCtrl.DC  , BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_fsel(LCDCtrl.CE  , BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_fsel(LCDCtrl.RST , BCM2835_GPIO_FSEL_OUTP);
+
+
+	// digitalWrite(LCDCtrl.CE , LOW);
+	// digitalWrite(LCDCtrl.RST, LOW);
+	// digitalWrite(LCDCtrl.RST, HIGH);
+	// digitalWrite(LCDCtrl.CE , HIGH);
+
+	bcm2835_gpio_write(LCDCtrl.CE , LOW);
+	bcm2835_gpio_write(LCDCtrl.RST, LOW);
+	bcm2835_gpio_write(LCDCtrl.RST, HIGH);
+	bcm2835_gpio_write(LCDCtrl.CE , HIGH);
 
 	SendLCD(CMD,0x21);
-	SendLCD(CMD,0xB4);
+	SendLCD(CMD,0xBF);
 	SendLCD(CMD,0x04);
 	SendLCD(CMD,0x14);
 	SendLCD(CMD,0x0C);
@@ -98,10 +112,14 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 {
 	uint8_t i;
 
-	digitalWrite(LCDCtrl.CE , LOW);
-	digitalWrite(LCDCtrl.DC , bMode);
-	shiftOut(LCDCtrl.DIN,LCDCtrl.CLK, MSBFIRST, bData) ;
-	digitalWrite(LCDCtrl.CE , HIGH);
+	// digitalWrite(LCDCtrl.CE , LOW);
+	// digitalWrite(LCDCtrl.DC , bMode);
+	bcm2835_gpio_write(LCDCtrl.CE, LOW);
+	bcm2835_gpio_write(LCDCtrl.DC, bMode);
+
+	SPI_Shift(LCDCtrl.DIN,LCDCtrl.CLK, bData) ;
+	// digitalWrite(LCDCtrl.CE , HIGH);
+	bcm2835_gpio_write(LCDCtrl.CE, HIGH);
 
 #if DEBUG
 	printf("%2x ",bData);
@@ -143,5 +161,18 @@ void LCDSample(void)
   	LcdString("Nokia 5110");
   	gotoXY(4,2);
   	LcdString("Scroll Demo");
+
+}
+
+void SPI_Shift(uint8_t bDIN,uint8_t bCLK,uint8_t bData)
+{
+	uint8_t i;
+
+  	for (i = 7 ; i >= 0 ; --i)
+    {
+      bcm2835_gpio_write (bDIN, bData & (1 << i)) ;
+      bcm2835_gpio_write (bCLK, HIGH) ;
+      bcm2835_gpio_write (bCLK, LOW) ;
+    }
 
 }
