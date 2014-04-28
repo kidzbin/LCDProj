@@ -58,7 +58,7 @@ int LCDInit(void)
 	LCDCtrl.CLK = 0;
 	LCDCtrl.DIN = 1;
 	LCDCtrl.DC  = 2;
-	LCDCtrl.CE  = 3;
+	LCDCtrl.CE  = 10;
 	LCDCtrl.RST = 4;
 
 	pinMode(LCDCtrl.CLK , OUTPUT);
@@ -98,8 +98,8 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 {
 	uint8_t i;
 
-	digitalWrite(LCDCtrl.CE , LOW);
 	digitalWrite(LCDCtrl.DC , bMode);
+	digitalWrite(LCDCtrl.CE , LOW);
 	//shiftOut(LCDCtrl.DIN,LCDCtrl.CLK, MSBFIRST, bData) ;
 	
 	i=0x08;
@@ -108,8 +108,11 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 		i--;
 		// printf("%d ",(bData>>i)&0x01);
 		digitalWrite(LCDCtrl.DIN , (bData>>i)&0x01 );
+		delayMicroseconds(10);
 		digitalWrite(LCDCtrl.CLK , HIGH);
+		delayMicroseconds(10);
 		digitalWrite(LCDCtrl.CLK , LOW );
+		delayMicroseconds(10);
 
 
 	}while(i);	
