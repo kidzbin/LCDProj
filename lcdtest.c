@@ -32,15 +32,14 @@ int contrast = 50;
 
 float DetectThermalCouple(void)
 {
-    uint8_t buff[2];
+    uint8_t buff[2],i;
     int chan=1;
     int speed=1000000;
     wiringPiSPIDataRW (chan,buff,2);
     uint16_t wRaw,dot;
     float wTemp;
 
-    wRaw = ((uint16_t)((buff[0]<<8) | (buff[0]))&0x7FF8)>>3;
-
+    wRaw = ((uint16_t)((buff[0]<<8) | (buff[1]))&0x7FF8)>>3;
     wTemp = (float)(wRaw>>2) + (float)(wRaw&0x03)*(0.25);
 
     return wTemp;
@@ -119,7 +118,7 @@ int main(void)
       sprintf(HumiInfo,"Humi %2d%c",DHT11Data.Value[0x00],0x25);
       sprintf(TempInfo,"Temp %2dC",DHT11Data.Value[0x02]);
       sprintf(TimeInfo,"%2d:%2d:%2d ",timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
-      sprintf(KInfo,"%.2f",wTemp);
+      sprintf(KInfo,"K %2.2f%cC",wTemp,0x27);
 
       LCDClear();
       gotoXY(4,0);
