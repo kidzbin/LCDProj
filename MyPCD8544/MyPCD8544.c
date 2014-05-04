@@ -51,10 +51,6 @@ void gotoXY(uint8_t x, uint8_t y)
 
 int LCDInit(void)
 {
-
-  if(wiringPiSetup() == -1)
-    return -1;
-
 	LCDCtrl.CLK = 0;
 	LCDCtrl.DIN = 1;
 	LCDCtrl.DC  = 2;
@@ -73,7 +69,7 @@ int LCDInit(void)
 	digitalWrite(LCDCtrl.CE , HIGH);
 
 	SendLCD(CMD,0x21);
-	SendLCD(CMD,0xB4);
+	SendLCD(CMD,0xB2);
 	SendLCD(CMD,0x04);
 	SendLCD(CMD,0x14);
 	SendLCD(CMD,0x0C);
@@ -108,16 +104,13 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 		i--;
 		// printf("%d ",(bData>>i)&0x01);
 		digitalWrite(LCDCtrl.DIN , (bData>>i)&0x01 );
-		delayMicroseconds(10);
+		delayMicroseconds(5);
 		digitalWrite(LCDCtrl.CLK , HIGH);
-		delayMicroseconds(10);
+		delayMicroseconds(5);
 		digitalWrite(LCDCtrl.CLK , LOW );
-		delayMicroseconds(10);
-
+		delayMicroseconds(5);
 
 	}while(i);	
-
-
 
 
 	digitalWrite(LCDCtrl.CE , HIGH);

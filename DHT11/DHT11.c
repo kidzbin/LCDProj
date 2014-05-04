@@ -1,12 +1,28 @@
+#include <stdint.h>
+#include <wiringPi.h>
 #include "DHT11.h"
 
 #define  DEBUG   0
 
-int Waiting(int ReadPin , int Signal)
+uint8_t bReadPin;
+
+
+int InitDHT11(uint8_t ReadPinSetup)
+{
+  bReadPin = ReadPinSetup;
+
+  //Pull High wait for Voltage Stable
+  pinMode(bReadPin, OUTPUT);
+
+  digitalWrite(bReadPin, HIGH);
+  delay(50);
+}
+
+int Waiting(int Signal)
 {
   int bCnt=0x00;
 
-  while( digitalRead(ReadPin) == Signal )
+  while( digitalRead(bReadPin) == Signal )
   {
       bCnt++;
       delayMicroseconds(1);
@@ -16,23 +32,34 @@ int Waiting(int ReadPin , int Signal)
   return bCnt;
 }
 
-int FetchData(int ReadPin , _DHT11Data * DHT11Data)
+int FetchData(_DHT11Data * DHT11Data)
 {
-  int i,j;
-  int rawus[40];
-  int sbit[40];
-  int sum;
-  int Maxus=0x00,Minus=0xFFFF;
-  int diffrange;
+  uint8_t i,j;
+  uint8_t rawus[40];
+  uint8_t sbit[40];
+  uint8_t sum;
+  uint8_t Maxus=0x00,Minus=0xFF;
+  uint8_t diffrange;
+
+  //at least keop low 18ms
+  pinMode(bReadPin, OUTPUT);
+  digitalWrite(bReadPin, LOW);
+  delay(20);
+  //Keep High 25~40us
+  pinMode(bReadPin, OUTPUT);
+  digitalWrite(bReadPin, HIGH);
+  delayMicroseconds(30);
+
+  pinMode(bReadPin, INPUT);
 
   //Wait DHT11 Prepare Data
-  Waiting(ReadPin,LOW);
-  Waiting(ReadPin,HIGH);
+  Waiting(LOW);
+  Waiting(HIGH);
 
   for( i=0 ; i< 40; i++ )
   {
-    Waiting( ReadPin, LOW);
-    rawus[i]=Waiting( ReadPin, HIGH);
+    Waiting(LOW);
+    rawus[i]=Waiting(HIGH);
   }
 
   for( i=0 ; i< 40; i++ )
