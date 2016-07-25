@@ -6,11 +6,12 @@
 #include <wiringShift.h>
 #include "MyPCD8544.h"
 
-// COnfiguration for the LCD
-#define LCD_C     LOW
-#define LCD_D     HIGH
-#define LCD_CMD   0
 
+#define _DIN 1
+#define _CLK 0
+#define _DC  2
+#define _RST 4
+#define _CS  3
 
 #define  DEBUG 0
 
@@ -24,8 +25,6 @@
 // LCD7 - RST    P16 - GPIO4
 // LCD8 - LED    P01 - 3.3V 
 
-//delayMicroseconds(30);
-
 #define LCDWIDTH  48
 #define LCDHEIGHT 84
 
@@ -36,11 +35,9 @@ typedef struct
 	uint8_t DC;
 	uint8_t CE;
 	uint8_t RST;
+	uint8_t CONTRAST;
 }_LCDCtrl;
-
-
 _LCDCtrl LCDCtrl;
-
 
 void gotoXY(uint8_t x, uint8_t y)
 {
@@ -48,21 +45,54 @@ void gotoXY(uint8_t x, uint8_t y)
   SendLCD( 0, 0x40 | y);  // Row.
 }
 
-
-int LCDInit(void)
+void LCDInit(uint8_t CLK, uint8_t DIN , uint8_t DC , uint8_t CE ,uint8_t RST,uint8_t CONTRAST)
 {
-	LCDCtrl.CLK = 0;
-	LCDCtrl.DIN = 1;
-	LCDCtrl.DC  = 2;
-	LCDCtrl.CE  = 10;
-	LCDCtrl.RST = 4;
+	LCDCtrl.CLK      = CLK;
+	LCDCtrl.DIN      = DIN;
+	LCDCtrl.DC       = DC;
+	LCDCtrl.CE       = CE;
+	LCDCtrl.RST      = RST;
+	LCDCtrl.CONTRAST = CONTRAST;
 
 	pinMode(LCDCtrl.CLK , OUTPUT);
 	pinMode(LCDCtrl.DIN , OUTPUT);
 	pinMode(LCDCtrl.DC  , OUTPUT);
 	pinMode(LCDCtrl.CE  , OUTPUT);
 	pinMode(LCDCtrl.RST , OUTPUT);
+#if 0
+ // Reset the controller state...
+    digitalWrite(LCDCtrl.RST, HIGH);
+    digitalWrite(LCDCtrl.CE, HIGH);
+    digitalWrite(LCDCtrl.RST, LOW);
+    delay(100);
+    digitalWrite(LCDCtrl.RST, HIGH);
 
+    // Set the LCD parameters...
+    SendLCD(CMD, 0x21);  // extended instruction set control (H=1)
+    SendLCD(CMD, 0x13);  // bias system (1:48)
+
+//    if (this->model == CHIP_ST7576) {
+//       SendLCD(CMD, 0xe0);  // higher Vop, too faint at default
+//       SendLCD(CMD, 0x05);  // partial display mode
+//   } else {
+    SendLCD(CMD, 0xc2);  // default Vop (3.06 + 66 * 0.06 = 7V)
+ //   }
+
+    SendLCD(CMD, 0x20);  // extended instruction set control (H=0)
+    SendLCD(CMD, 0x09);  // all display segments on
+
+    // Clear RAM contents...
+    LCDClear();
+
+    // Activate LCD...
+    SendLCD(CMD, 0x08);  // display blank
+    SendLCD(CMD, 0x0c);  // normal mode (0x0d = inverse mode)
+    delay(100);
+
+    // Place the cursor at the origin...
+    SendLCD(CMD, 0x80);
+    SendLCD(CMD, 0x40);
+#else
 	digitalWrite(LCDCtrl.CE , LOW);
 	digitalWrite(LCDCtrl.RST, LOW);
 	digitalWrite(LCDCtrl.RST, HIGH);
@@ -76,10 +106,15 @@ int LCDInit(void)
 
   	SendLCD(LOW, 0x20);
   	SendLCD(LOW, 0x0C);
+#endif
+
+    //Setup Contrast
+    SendLCD(CMD, 0x21);  // extended instruction set control (H=1)
+    SendLCD(CMD, 0x80 | (LCDCtrl.CONTRAST & 0x7f));
+    SendLCD(CMD, 0x20);  // extended instruction set control (H=0)
 
   	LCDClear();
 
-	return 0;
 }
 
 int LCDClear(void)
@@ -132,12 +167,12 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 void LcdCharacter(char character)
 {
 	uint8_t index;
-  	SendLCD(LCD_D, 0x00);
+  	SendLCD(DATA, 0x00);
   	for (index = 0; index < 5; index++)
   	{
-    	SendLCD(LCD_D, ASCII[character - 0x20][index]);
+    	SendLCD(DATA, ASCII[character - 0x20][index]);
   	}
-  	SendLCD(LCD_D, 0x00);
+  	SendLCD(DATA, 0x00);
 }
 
 void LcdString(char *characters)
