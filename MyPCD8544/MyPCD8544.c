@@ -164,7 +164,7 @@ void SendLCD(uint8_t bMode,uint8_t bData)
 #endif
 }
 
-void LcdCharacter(char character)
+void LCDCharacter(char character)
 {
 	uint8_t index;
   	SendLCD(DATA, 0x00);
@@ -175,11 +175,11 @@ void LcdCharacter(char character)
   	SendLCD(DATA, 0x00);
 }
 
-void LcdString(char *characters)
+void LCDString(char *characters)
 {
   while (*characters)
   {
-    LcdCharacter(*characters++);
+    LCDCharacter(*characters++);
   }
 }
 
@@ -187,8 +187,8 @@ void LCDSample(void)
 {
 	LCDClear();
  	gotoXY(7,1);
-  	LcdString("Nokia 5110");
+  	LCDString("Nokia 5110");
   	gotoXY(4,2);
-  	LcdString("Scroll Demo");
+  	LCDString("Scroll Demo");
 
 }
